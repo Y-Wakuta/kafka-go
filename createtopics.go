@@ -364,7 +364,9 @@ func (c *Conn) createTopics(request createTopicsRequestV0) (createTopicsResponse
 	}
 	for _, tr := range response.TopicErrors {
 		if tr.ErrorCode != 0 {
-			return response, Error(tr.ErrorCode)
+			if !errors.Is(Error(tr.ErrorCode), TopicAlreadyExists) {
+				return response, Error(tr.ErrorCode)
+			}
 		}
 	}
 
@@ -385,14 +387,5 @@ func (c *Conn) CreateTopics(topics ...TopicConfig) error {
 	_, err := c.createTopics(createTopicsRequestV0{
 		Topics: requestV0Topics,
 	})
-	if err != nil {
-		if errors.Is(err, TopicAlreadyExists) {
-			// ok
-			return nil
-		}
-
-		return err
-	}
-
-	return nil
+	return err
 }
